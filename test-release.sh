@@ -39,7 +39,8 @@ then
     else
         hadoop="without-hadoop"
     fi
-    wget --progress=dot:giga https://archive.apache.org/dist/spark/spark-$spark/spark-$spark-bin-$hadoop.tgz -O - | tar -xzC .
+    # wget --progress=dot:giga https://archive.apache.org/dist/spark/spark-$spark/spark-$spark-bin-$hadoop.tgz -O - | tar -xzC .
+    curl https://archive.apache.org/dist/spark/spark-$spark/spark-$spark-bin-$hadoop.tgz | tar -xzC .
     ln -s spark-$spark-bin-$hadoop spark-$spark-$scala_compat
 fi
 
