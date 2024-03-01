@@ -119,7 +119,7 @@ Note: Pick the right Scala version (here 2.12) and Spark version (here 3.4) depe
 Launch the Python Spark REPL with the Spark Extension dependency (version ≥1.1.0) as follows:
 
 ```shell script
-pyspark --packages uk.co.gresearch.spark:spark-extension_2.12:2.11.0-3.4
+pyspark --packages uk.co.gresearch.spark:spark-extension_2.12:2.12.0-3.4
 ```
 
 Note: Pick the right Scala version (here 2.12) and Spark version (here 3.4) depending on your PySpark version.

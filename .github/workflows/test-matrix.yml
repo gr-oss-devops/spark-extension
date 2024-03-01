@@ -1,0 +1,21 @@
+name: Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      versions:
+        required: true
+        type: string
+
+jobs:
+  publish-release:
+    name: Test input
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    strategy:
+      matrix: ${{fromJson(github.event.inputs.versions)}}
+
+    steps:
+      - name: Test output
+        run: |
+          echo "test"
