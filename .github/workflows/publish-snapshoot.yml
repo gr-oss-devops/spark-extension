@@ -3,6 +3,13 @@ name: Publish snapshoot
 on:
   push:
     branches: ["master"]
+  workflow_dispatch:
+    inputs:
+      versions:
+        required: false
+        type: string
+        description: 'Example: {"include": [{"params": {"spark-version": "3.0.3","scala-version": "2.12.10"}}]}'
+        default: ''
 
 env:
   PYTHON_VERSION: "3.10"
@@ -13,6 +20,7 @@ jobs:
     if: ${{ !github.event.repository.fork }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
           - params: {"spark-version": "3.0.3", "scala-version": "2.12.10"}

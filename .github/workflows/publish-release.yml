@@ -82,6 +82,7 @@ jobs:
     permissions:
       contents: write # required to push to a branch
     strategy:
+        fail-fast: false
         matrix: ${{fromJson(github.event.inputs.versions)}}
 
     steps:
