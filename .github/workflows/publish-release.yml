@@ -146,15 +146,15 @@ jobs:
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v1
         if: steps.publish.outcome == 'success'
-        id: githubRelease
+        id: github-release
         with:
           name: "Releasing ${{ steps.publish.outputs.RELEASE_TAG }}"
           body_path: CHANGELOG.md
           tag_name: ${{ steps.publish.outputs.RELEASE_TAG }}
 
       - name: Bump version for SNAPSHOT
-        id: bumpVersion
-        if: steps.githubRelease.outcome == 'success'
+        id: bump-version
+        if: steps.github-release.outcome == 'success'
         run: |
 
           # define function to bump version
