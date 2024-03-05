@@ -17,6 +17,7 @@ jobs:
   prepare-release:
     name: Prepare release
     runs-on: ubuntu-latest
+    if: ${{ !github.event.repository.fork }}
     permissions:
       contents: write # required to push to a branch 
     outputs:
