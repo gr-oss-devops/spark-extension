@@ -209,7 +209,7 @@ Add this dependency to your `pom.xml` file:
 <dependency>
   <groupId>uk.co.gresearch.spark</groupId>
   <artifactId>spark-extension_2.12</artifactId>
-    <version>2.11.0-3.5</version>
+  <version>2.11.0-3.5</version>
 </dependency>
 ```
 

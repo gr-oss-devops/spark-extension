@@ -1,4 +1,4 @@
-name: Release
+name: Publish release
 
 on:
   workflow_dispatch:
@@ -21,7 +21,7 @@ jobs:
     # needs: [snapshoot]
     if: ${{ github.event_name == 'workflow_dispatch' }}
     permissions:
-      contents: write # required to push to a branch
+      contents: write # required to push to a branch 
     outputs:
       RELEASE_TAG: ${{ steps.updateVersions.outputs.releaseTagVersion }}
 
