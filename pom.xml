@@ -121,11 +121,10 @@
   </repositories>
 
   <distributionManagement>
-      <repository>
-          <id>local-dummy-repo</id>
-          <name>Local Dummy Repository</name>
-          <url>file://${project.build.directory}/local-dummy-repo</url>
-      </repository>
+      <snapshotRepository>
+          <id>ossrh</id>
+          <url>file://${project.build.directory}/local-snapshoot-repo</url>
+      </snapshotRepository>
   </distributionManagement>
 
   <build>
