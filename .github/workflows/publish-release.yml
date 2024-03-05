@@ -6,9 +6,8 @@ on:
       versions:
         required: true
         type: string
-        description: 'Example: {"include": [{"params": {"sparkVersion": "3.0.3","scalaVersion": "2.12.10"}},{"params": {"sparkVersion": "3.1.3","scalaVersion": "2.12.10"}},{"params": { "sparkVersion": "3.2.4","scalaVersion": "2.12.15"}},{"params": {"sparkVersion": "3.3.4","scalaVersion": "2.12.15"}},{"params": {"sparkVersion": "3.4.2","scalaVersion": "2.12.17"}},{"params": {"sparkVersion": "3.5.0","scalaVersion": "2.12.18"}},{"params": {"sparkVersion": "3.2.4","scalaVersion": "2.13.5"}},{"params": {"sparkVersion": "3.3.4","scalaVersion": "2.13.8"}},{"params": {"sparkVersion": "3.4.2","scalaVersion": "2.13.8"}},{"params": {"sparkVersion": "3.5.0","scalaVersion": "2.13.8"}}]}'
+        description: 'Example: {"include": [{"params": {"spark-version": "3.0.3","scala-version": "2.12.10"}},{"params": {"spark-version": "3.1.3","scala-version": "2.12.10"}},{"params": { "spark-version": "3.2.4","scala-version": "2.12.15"}},{"params": {"spark-version": "3.3.4","scala-version": "2.12.15"}},{"params": {"spark-version": "3.4.2","scala-version": "2.12.17"}},{"params": {"spark-version": "3.5.0","scala-version": "2.12.18"}},{"params": {"spark-version": "3.2.4","scala-version": "2.13.5"}},{"params": {"spark-version": "3.3.4","scala-version": "2.13.8"}},{"params": {"spark-version": "3.4.2","scala-version": "2.13.8"}},{"params": {"spark-version": "3.5.0","scala-version": "2.13.8"}}]}'
         default: ''
-        # {"include": [{"params": {"sparkVersion": "3.0.3","scalaVersion": "2.12.10"}},{"params": {"sparkVersion": "3.1.3","scalaVersion": "2.12.10"}},{"params": { "sparkVersion": "3.2.4","scalaVersion": "2.12.15"}},{"params": {"sparkVersion": "3.3.4","scalaVersion": "2.12.15"}},{"params": {"sparkVersion": "3.4.2","scalaVersion": "2.12.17"}},{"params": {"sparkVersion": "3.5.0","scalaVersion": "2.12.18"}},{"params": {"sparkVersion": "3.2.4","scalaVersion": "2.13.5"}},{"params": {"sparkVersion": "3.3.4","scalaVersion": "2.13.8"}},{"params": {"sparkVersion": "3.4.2","scalaVersion": "2.13.8"}},{"params": {"sparkVersion": "3.5.0","scalaVersion": "2.13.8"}}]}
 
 env:
   PYTHON_VERSION: "3.10"
@@ -18,8 +17,6 @@ jobs:
   prepare-release:
     name: Prepare release
     runs-on: ubuntu-latest
-    # needs: [snapshoot]
-    if: ${{ github.event_name == 'workflow_dispatch' }}
     permissions:
       contents: write # required to push to a branch 
     outputs:
@@ -29,8 +26,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check if this is a SNAPSHOT versions
-        id: check-snapshoot
+      - name: Check if this is a SNAPSHOT version
+        id: check-snapshot
         run: |
           if ! grep -q "<version>.*-SNAPSHOT</version>" pom.xml
           then
@@ -39,7 +36,7 @@ jobs:
           fi
 
       - name: Update versions
-        id: updateVersions
+        id: update-versions
         run: |
 
           # check for unreleased entry in CHANGELOG.md
@@ -79,10 +76,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish-release:
-    name: Prepare release
+    name: Publish release
     runs-on: ubuntu-latest
     needs: [prepare-release]
-    if: ${{ github.event_name == 'workflow_dispatch' && success() }}
     permissions:
       contents: write # required to push to a branch
     strategy:
@@ -109,19 +105,19 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-mvn-build-${{ matrix.params.sparkVersion }}-${{ matrix.params.scalaVersion }}-${{ hashFiles('pom.xml') }}
-          restore-keys: ${{ runner.os }}-mvn-build-${{ matrix.params.sparkVersion }}-${{ matrix.params.scalaVersion }}-
+          key: ${{ runner.os }}-mvn-build-${{ matrix.params.spark-version }}-${{ matrix.params.scala-version }}-${{ hashFiles('pom.xml') }}
+          restore-keys: ${{ runner.os }}-mvn-build-${{ matrix.params.spark-version }}-${{ matrix.params.scala-version }}-
       
       - name: Cache Pip packages
         id: cache-pip
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-whl-${{ env.PYTHON_VERSION }}-${{ matrix.params.sparkVersion }}
+          key: ${{ runner.os }}-pip-whl-${{ env.PYTHON_VERSION }}-${{ matrix.params.spark-version }}
 
       - name: Import GPG key
         id: sign
-        uses: crazy-max/ghaction-import-gpg@v6
+        uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
 
@@ -130,11 +126,11 @@ jobs:
         run: |
 
           # build and publish artifact
-          ./set-version.sh ${{ matrix.params.sparkVersion }} ${{ matrix.params.scalaVersion }}
+          ./set-version.sh ${{ matrix.params.spark-version }} ${{ matrix.params.scala-version }}
           mvn clean deploy -Dsign
 
           # For Scala version 2.12 build & release python
-          if [[ ${{ matrix.params.scalaVersion }}  == 2.12* ]]; then
+          if [[ ${{ matrix.params.scala-version }}  == 2.12* ]]; then
               echo "Scala version starts with '2.12'"
               ./build-whl.sh
 
@@ -208,5 +204,7 @@ jobs:
           # push version bump to origin
           echo "Pushing release commit to origin"
           git push origin "master"
+          # NOTE: This push will not trigger a CI as we are using GITHUB_TOKEN to push
+          # More info on: https://docs.github.com/en/actions/using-workflows/triggering-a-workflow#triggering-a-workflow-from-a-workflow
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
