@@ -1,7 +1,6 @@
 name: Publish snapshoot
 
 on:
-  # scheduled: 
     push:
       branches: ["master"]
 
@@ -10,23 +9,22 @@ env:
 
 jobs:
   snapshoot:
-    name: Release snapshoot Spark:${{ matrix.params.sparkVersion }} - Scala:${{ matrix.params.scalaVersion }}
-    if: ${{  github.event_name == 'scheduled' ||  (github.ref == 'refs/heads/master' && github.event_name != 'workflow_dispatch')  }}
-    ## if: ${{ !github.event.repository.fork && (github.ref == 'refs/heads/master' || github.event_name == 'scheduled') }}
+    name: Release snapshoot Spark:${{ matrix.params.spark-version }} - Scala:${{ matrix.params.scala-version }}
+    if: ${{ !github.event.repository.fork }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
-          - params: {"sparkVersion": "3.0.3", "scalaVersion": "2.12.10"}
-          - params: {"sparkVersion": "3.1.3", "scalaVersion": "2.12.10"}
-          - params: {"sparkVersion": "3.2.4", "scalaVersion": "2.12.15"}
-          - params: {"sparkVersion": "3.3.4", "scalaVersion": "2.12.15"}
-          - params: {"sparkVersion": "3.4.2", "scalaVersion": "2.12.17"}
-          - params: {"sparkVersion": "3.5.0", "scalaVersion": "2.12.18"}
-          - params: {"sparkVersion": "3.2.4", "scalaVersion": "2.13.5"}
-          - params: {"sparkVersion": "3.3.4", "scalaVersion": "2.13.8"}
-          - params: {"sparkVersion": "3.4.2", "scalaVersion": "2.13.8"}
-          - params: {"sparkVersion": "3.5.0", "scalaVersion": "2.13.8"}
+          - params: {"spark-version": "3.0.3", "scala-version": "2.12.10"}
+          - params: {"spark-version": "3.1.3", "scala-version": "2.12.10"}
+          - params: {"spark-version": "3.2.4", "scala-version": "2.12.15"}
+          - params: {"spark-version": "3.3.4", "scala-version": "2.12.15"}
+          - params: {"spark-version": "3.4.2", "scala-version": "2.12.17"}
+          - params: {"spark-version": "3.5.0", "scala-version": "2.12.18"}
+          - params: {"spark-version": "3.2.4", "scala-version": "2.13.5"}
+          - params: {"spark-version": "3.3.4", "scala-version": "2.13.8"}
+          - params: {"spark-version": "3.4.2", "scala-version": "2.13.8"}
+          - params: {"spark-version": "3.5.0", "scala-version": "2.13.8"}
 
     steps:
       - name: Checkout code
@@ -47,23 +45,23 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-mvn-build-${{ matrix.params.sparkVersion }}-${{ matrix.params.scalaVersion }}-${{ hashFiles('pom.xml') }}
-          restore-keys: ${{ runner.os }}-mvn-build-${{ matrix.params.sparkVersion }}-${{ matrix.params.scalaVersion }}-
+          key: ${{ runner.os }}-mvn-build-${{ matrix.params.spark-version }}-${{ matrix.params.scala-version }}-${{ hashFiles('pom.xml') }}
+          restore-keys: ${{ runner.os }}-mvn-build-${{ matrix.params.spark-version }}-${{ matrix.params.scala-version }}-
       
       - name: Cache Pip packages
         id: cache-pip
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-whl-${{ env.PYTHON_VERSION }}-${{ matrix.params.sparkVersion }}
+          key: ${{ runner.os }}-pip-whl-${{ env.PYTHON_VERSION }}-${{ matrix.params.spark-version }}
 
       - name: Import GPG key
         id: sign
-        uses: crazy-max/ghaction-import-gpg@v6
+        uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
 
-      - name: Check if this is a SNAPSHOT versions
+      - name: Check if this is a SNAPSHOT version
         id: check-snapshoot
         run: |
           if ! grep -q "<version>.*-SNAPSHOT</version>" pom.xml
@@ -72,19 +70,19 @@ jobs:
             exit 1
           fi
 
-      - name: Release snapshoot Spark:${{ matrix.params.sparkVersion }} - Scala:${{ matrix.params.scalaVersion }}
-        id: snapshoot
+      - name: Release snapshot
+        id: snapshot
         run: |
 
           # required for GitHub CI
           pip3 install virtualenv
           mkdir -p ~/.ivy2
 
-          ./set-version.sh ${{ matrix.params.sparkVersion }} ${{ matrix.params.scalaVersion }}
+          ./set-version.sh ${{ matrix.params.spark-version }} ${{ matrix.params.scala-version }}
           mvn clean deploy -Dsign
 
           # For Scala version 2.12 build the python
-          if [[ ${{ matrix.params.scalaVersion }}  == 2.12* ]]; then
+          if [[ ${{ matrix.params.scala-version }}  == 2.12* ]]; then
               echo "Scala version starts with '2.12'"
               ./build-whl.sh
           fi

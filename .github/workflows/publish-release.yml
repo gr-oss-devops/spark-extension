@@ -64,8 +64,8 @@ jobs:
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
 
-      - name: Check if this is a SNAPSHOT versions
-        id: check-snapshoot
+      - name: Check if this is a SNAPSHOT version
+        id: check-snapshot
         run: |
           if ! grep -q "<version>.*-SNAPSHOT</version>" pom.xml
           then
