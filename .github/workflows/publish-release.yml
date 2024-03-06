@@ -145,14 +145,41 @@ jobs:
               python3 -m twine upload python/dist/*
           fi
 
+      - name: Extract release notes
+        id: release-notes
+        run: |
+          awk '
+          BEGIN { capture = 0; print_capture = 0; }
+          /^## / {
+            if (capture == 0) {
+              capture = 1;              # Start capture on the first occurrence of "##"
+            } else if (capture == 1) {
+              print_capture = 1;        # Prepare to stop capturing on the next "##"
+            }
+          }
+
+          capture && !print_capture { print; }
+          print_capture { exit; }       # Exit after capturing the desired content
+          ' CHANGELOG.md > ./release-notes.txt
+
+          # Grab release name
+          name=$(grep "^## " release-notes.txt | head -n 1 | sed "s/^## //")
+          echo "release_name=$name" >> $GITHUB_OUTPUT
+
+          # Leave only body for the release
+          sed -i -e '1d' ./release-notes.txt # Remove the first line in the file
+          echo "release_notes_path=release-notes.txt" >> $GITHUB_OUTPUT
+
       - name: Publish GitHub release
-        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
-        if: steps.publish.outcome == 'success'
+        uses: ncipollo/release-action@2c591bcc8ecdcd2db72b97d6147f871fcd833ba5
+        if: steps.publish.outcome == 'success' && steps.release-notes.outcome == 'success' 
         id: github-release
         with:
-          name: "Releasing ${{ steps.publish.outputs.RELEASE_TAG }}"
-          body_path: CHANGELOG.md
-          tag_name: ${{ steps.publish.outputs.RELEASE_TAG }}
+          name: ${{ steps.release-notes.outputs.release_name }}
+          bodyFile: ${{ steps.release-notes.outputs.release_notes_path }}
+          makeLatest: true
+          tag: ${{needs.prepare-release.outputs.RELEASE_TAG}}
+          token: ${{ github.token }}
 
       - name: Bump version for SNAPSHOT
         id: bump-version
