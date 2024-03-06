@@ -1,4 +1,4 @@
-name: Publish snapshoot
+name: Publish snapshot
 
 on:
   push:
@@ -15,8 +15,8 @@ env:
   PYTHON_VERSION: "3.10"
 
 jobs:
-  snapshoot:
-    name: Release snapshoot Spark:${{ matrix.params.spark-version }} - Scala:${{ matrix.params.scala-version }}
+  snapshot:
+    name: Release snapshot Spark:${{ matrix.params.spark-version }} - Scala:${{ matrix.params.scala-version }}
     if: ${{ !github.event.repository.fork }}
     runs-on: ubuntu-latest
     strategy:
@@ -70,7 +70,7 @@ jobs:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
 
       - name: Check if this is a SNAPSHOT version
-        id: check-snapshoot
+        id: check-snapshot
         run: |
           if ! grep -q "<version>.*-SNAPSHOT</version>" pom.xml
           then
