@@ -8,6 +8,11 @@ on:
         type: string
         description: 'Example: {"include": [{"params": {"spark-version": "3.0.3","scala-version": "2.12.10"}}]}'
         default: '{"include": [{"params": {"spark-version": "3.0.3","scala-version": "2.12.10"}},{"params": {"spark-version": "3.1.3","scala-version": "2.12.10"}},{"params": { "spark-version": "3.2.4","scala-version": "2.12.15"}},{"params": {"spark-version": "3.3.4","scala-version": "2.12.15"}},{"params": {"spark-version": "3.4.2","scala-version": "2.12.17"}},{"params": {"spark-version": "3.5.0","scala-version": "2.12.18"}},{"params": {"spark-version": "3.2.4","scala-version": "2.13.5"}},{"params": {"spark-version": "3.3.4","scala-version": "2.13.8"}},{"params": {"spark-version": "3.4.2","scala-version": "2.13.8"}},{"params": {"spark-version": "3.5.0","scala-version": "2.13.8"}}]}'
+      github_release_latest:
+        description: 'Make the published GitHub release as the latest'
+        required: false
+        default: true
+        type: boolean
 
 env:
   PYTHON_VERSION: "3.10"
@@ -148,42 +153,27 @@ jobs:
       - name: Extract release notes
         id: release-notes
         run: |
-          awk '
-          BEGIN { capture = 0; print_capture = 0; }
-          /^## / {
-            if (capture == 0) {
-              capture = 1;              # Start capture on the first occurrence of "##"
-            } else if (capture == 1) {
-              print_capture = 1;        # Prepare to stop capturing on the next "##"
-            }
-          }
-
-          capture && !print_capture { print; }
-          print_capture { exit; }       # Exit after capturing the desired content
-          ' CHANGELOG.md > ./release-notes.txt
+          awk '/^## /{if(seen==1)exit; seen++} seen' CHANGELOG.md > ./release-notes.txt
 
           # Grab release name
-          name=$(grep "^## " release-notes.txt | head -n 1 | sed "s/^## //")
+          name=$(grep -m 1 "^## " CHANGELOG.md | sed "s/^## //")
           echo "release_name=$name" >> $GITHUB_OUTPUT
-
-          # Leave only body for the release
-          sed -i -e '1d' ./release-notes.txt # Remove the first line in the file
+          
+          # provide release notes file path as output
           echo "release_notes_path=release-notes.txt" >> $GITHUB_OUTPUT
 
       - name: Publish GitHub release
         uses: ncipollo/release-action@2c591bcc8ecdcd2db72b97d6147f871fcd833ba5
-        if: steps.publish.outcome == 'success' && steps.release-notes.outcome == 'success' 
         id: github-release
         with:
           name: ${{ steps.release-notes.outputs.release_name }}
           bodyFile: ${{ steps.release-notes.outputs.release_notes_path }}
-          makeLatest: true
+          makeLatest: ${{ inputs.github_release_latest }}
           tag: ${{needs.prepare-release.outputs.RELEASE_TAG}}
           token: ${{ github.token }}
 
       - name: Bump version for SNAPSHOT
         id: bump-version
-        if: steps.github-release.outcome == 'success'
         run: |
 
           # define function to bump version
