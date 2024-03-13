@@ -76,9 +76,10 @@ jobs:
         id: snapshot
         run: |
 
-          # required for GitHub CI
-          pip3 install virtualenv
+          # required by mvn
           mkdir -p ~/.ivy2
+          # required by ./test-release.sh
+          pip3 install virtualenv
 
           ./set-version.sh ${{ matrix.params.spark-version }} ${{ matrix.params.scala-version }}
           mvn clean deploy -Dsign
