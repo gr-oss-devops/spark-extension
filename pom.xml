@@ -121,10 +121,10 @@
   </repositories>
 
   <distributionManagement>
-      <snapshotRepository>
-          <id>ossrh</id>
-          <url>file://${project.build.directory}/local-snapshot-repo</url>
-      </snapshotRepository>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
   </distributionManagement>
 
   <build>
